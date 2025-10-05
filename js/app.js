@@ -248,6 +248,9 @@
   async function runSearch(){
     const q = queryEl.value;
     resultsEl.innerHTML = '';
+    // Se limparmos o container, o sentinel antigo é removido do DOM.
+    // Precisamos forçar a recriação para que o IntersectionObserver volte a observar.
+    sentinel = null;
     paginator.hidden = true; // esconder paginação antiga
     scroller = window.NasaClient.createScroller(q, BATCH_SIZE);
     loading = false;
