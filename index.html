@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EarthShield25 — Asteroid Simulator and Listing (NASA)</title>
+    <meta
+      name="description"
+      content="Simulação de colisão de asteróides com a Terra e listagem usando APIs da NASA."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Inter:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="assets/img/logo.png" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin=""
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      crossorigin=""
+    ></script>
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <div class="brand">
+          <span class="logo"
+            ><img src="assets/img/logo_2.png" alt="Logo"
+          /></span>
+          <h1>EarthShield25</h1>
+        </div>
+        <nav class="actions">
+          <button id="tab-list" class="tab-button active" data-tab="list">
+            Asteróides
+          </button>
+          <button id="tab-map" class="tab-button" data-tab="map">
+            Simulação
+          </button>
+          <select id="lang-toggle" class="tab-button" style="min-width: 120px">
+            <option value="pt">Português</option>
+            <option value="en">English</option>
+          </select>
+        </nav>
+      </header>
+
+      <main class="app-main">
+        <!-- Painel de Lista -->
+        <section id="panel-list" class="panel visible">
+          <div class="panel-header">
+            <h2 id="list-title">Listagem de Asteróides (NASA NeoWs)</h2>
+            <form id="filters" class="filters" autocomplete="off">
+              <label id="search-label" style="min-width: 280px; flex: 1">
+                <span id="search-label-text">Buscar por nome ou ID</span>
+                <input
+                  type="text"
+                  id="query"
+                  placeholder="Ex.: 2001 WJ4 ou 3092506"
+                />
+              </label>
+              <button type="submit" class="primary"><span id="btn-search-label">Buscar</span></button>
+            </form>
+          </div>
+          <div id="results" class="results">
+            <div class="empty" id="results-empty-initial">Use os filtros e clique em Buscar.</div>
+          </div>
+          <div class="paginator" id="paginator" hidden>
+            <button id="prev-page" class="primary">Anterior</button>
+            <span id="page-info" class="muted"></span>
+            <button id="next-page" class="primary">Próximo</button>
+          </div>
+        </section>
+
+        <!-- Painel de Mapa -->
+        <section
+          id="panel-map"
+          class="panel hidden"
+          aria-label="Mapa de Impacto"
+        >
+          <div class="sim-layout">
+            <div>
+              <div
+                id="impact-map"
+                class="mapbox"
+                aria-label="Mapa com zonas de impacto"
+              ></div>
+              <div class="legend">
+                <span
+                  class="legend-chip"
+                  style="background: #7ae7ff"
+                  aria-hidden="true"
+                ></span
+                ><span id="legend-1" class="legend-label" title="">1 psi</span
+                >&nbsp;
+                <span
+                  class="legend-chip"
+                  style="background: #12e6ff"
+                  aria-hidden="true"
+                ></span
+                ><span id="legend-5" class="legend-label" title="">5 psi</span
+                >&nbsp;
+                <span
+                  class="legend-chip"
+                  style="background: #ffcc66"
+                  aria-hidden="true"
+                ></span
+                ><span id="legend-th" class="legend-label" title=""
+                  >Térmico</span
+                >
+              </div>
+            </div>
+            <aside class="impact-aside">
+              <h3 id="impact-title">Mapa & Mitigação</h3>
+              <div class="metric">
+                <span id="lbl-input-lat">Lat:</span
+                ><strong
+                  ><input id="map-lat" type="number" step="0.0001" value="0"
+                /></strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-input-lon">Lon:</span
+                ><strong
+                  ><input id="map-lon" type="number" step="0.0001" value="0"
+                /></strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-input-target">Alvo:</span
+                ><strong
+                  ><select id="impact-target">
+                    <option id="opt-land" value="land" selected>
+                      Continente
+                    </option>
+                    <option id="opt-ocean" value="ocean">Oceano</option>
+                  </select></strong
+                >
+              </div>
+              <div class="metric">
+                <span id="lbl-input-angle">Ângulo (°):</span
+                ><strong
+                  ><input
+                    id="impact-angle"
+                    type="number"
+                    min="10"
+                    max="90"
+                    step="1"
+                    value="45"
+                /></strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-input-size">Diâmetro (m):</span
+                ><strong
+                  ><input id="ast-size" type="number" step="1" value="500"
+                /></strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-input-speed">Velocidade (km/s):</span
+                ><strong
+                  ><input id="ast-speed" type="number" step="0.01" value="20"
+                /></strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-input-dv">Δv (mm/s):</span
+                ><strong
+                  ><input id="dv-mm" type="number" step="0.1" value="0"
+                /></strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-input-lead">Lead Time (dias):</span
+                ><strong
+                  ><input id="lead-days" type="number" step="1" value="0"
+                /></strong>
+              </div>
+              <div class="btn-row">
+                <button id="btn-centermap" class="icon-btn" title="Centralizar">
+                  <img src="assets/img/location.png" alt="" />
+                </button>
+                <button id="btn-simulate" class="primary">
+                  <span id="btn-simulate-label">Simular Impacto</span>
+                </button>
+              </div>
+            </aside>
+          </div>
+          <!-- Resultados abaixo do mapa/aside, ocupando 100% -->
+          <div id="impact-results" class="hidden">
+            <h4 id="results-title">Resultado da Simulação</h4>
+            <div class="grid">
+              <div class="metric">
+                <span id="lbl-lat">Lat:</span><strong id="res-lat">—</strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-lon">Lon:</span><strong id="res-lon">—</strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-energy">Energia:</span
+                ><strong id="res-energy">—</strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-tnt">Equivalente TNT:</span
+                ><strong id="res-mt">—</strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-crater">Cratera (diâmetro):</span
+                ><strong id="res-crater">—</strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-class">Classe do Evento:</span
+                ><strong id="res-class">—</strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-airburst">Altitude do Airburst:</span
+                ><strong id="res-airburst">—</strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-mw">Magnitude sísmica (Mw):</span
+                ><strong id="res-mw">—</strong
+                ><span id="tip-mw" aria-hidden="true"> ℹ️</span>
+              </div>
+              <div class="metric">
+                <span id="lbl-r5">Raio 5 psi (km):</span
+                ><strong id="res-op5">—</strong
+                ><span id="tip-r5" aria-hidden="true"> ℹ️</span>
+              </div>
+              <div class="metric">
+                <span id="lbl-r1">Raio 1 psi (km):</span
+                ><strong id="res-op1">—</strong
+                ><span id="tip-r1" aria-hidden="true"> ℹ️</span>
+              </div>
+              <div class="metric">
+                <span id="lbl-thermal">Raio térmico (km):</span
+                ><strong id="res-thermal">—</strong
+                ><span id="tip-th" aria-hidden="true"> ℹ️</span>
+              </div>
+              <div class="metric">
+                <span id="lbl-defl-lat">Lat (desviado):</span
+                ><strong id="res-defl-lat">—</strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-defl-lon">Lon (desviado):</span
+                ><strong id="res-defl-lon">—</strong>
+              </div>
+              <div class="metric">
+                <span id="lbl-defl-km">Desvio (km):</span
+                ><strong id="res-defl-km">—</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="brand-row">
+              <img
+                src="assets/img/logo_2.png"
+                alt="EarthShield25"
+                class="footer-logo"
+              />
+              <div>
+                <div class="footer-title">EarthShield25</div>
+                <div class="footer-sub">NASA NeoWs • Leaflet • USGS</div>
+              </div>
+            </div>
+            <p id="ft-desc" class="footer-desc">
+              Simulações educativas de impacto e estratégias de mitigação. Use
+              de forma responsável.
+            </p>
+          </div>
+          <nav class="footer-links">
+            <div class="footer-col">
+              <div id="ft-project" class="footer-col-title">Projeto</div>
+              <a
+                id="ft-link-ast"
+                href="#panel-list"
+                onclick="document.getElementById('tab-list').click()"
+                >Asteróides</a
+              >
+              <a
+                id="ft-link-sim"
+                href="#panel-map"
+                onclick="document.getElementById('tab-map').click()"
+                >Simulação</a
+              >
+              <a
+                id="ft-link-apis"
+                href="https://api.nasa.gov/"
+                target="_blank"
+                rel="noreferrer noopener"
+                >APIs NASA</a
+              >
+            </div>
+            <div class="footer-col">
+              <div id="ft-refs" class="footer-col-title">Referências</div>
+              <a
+                href="https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html"
+                target="_blank"
+                rel="noreferrer noopener"
+                >JPL SBDB</a
+              >
+              <a
+                href="https://www.usgs.gov/"
+                target="_blank"
+                rel="noreferrer noopener"
+                >USGS</a
+              >
+              <a
+                href="https://leafletjs.com/"
+                target="_blank"
+                rel="noreferrer noopener"
+                >Leaflet</a
+              >
+            </div>
+          </nav>
+          <div class="footer-meta">
+            <div class="copy">
+              © <span id="year-copy">2025</span>
+              <span id="ft-brand">EarthShield25</span>.
+              <span id="ft-edu">Conteúdo para fins educacionais.</span>
+            </div>
+            <div class="credit">
+              <span id="ft-challenge">Desafio: NASA Space Apps</span> •
+              <span id="ft-theme">Tema: Meteor Madness</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Se quiser, defina a sua API Key antes do nasaClient.js -->
+    <!-- <script>window.NASA_API_KEY="SUA_API_KEY";</script> -->
+    <script src="js/nasaClient.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/simulation.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

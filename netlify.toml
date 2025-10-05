@@ -1,0 +1,19 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+# Redirect API calls to serverless functions
+[[redirects]]
+  from = "/api/neo/browse"
+  to = "/.netlify/functions/neo-browse"
+  status = 200
+
+[[redirects]]
+  from = "/api/neo/feed"
+  to = "/.netlify/functions/neo-feed"
+  status = 200
+
+[[redirects]]
+  from = "/api/neo/neo/:id"
+  to = "/.netlify/functions/neo-neo/:id"
+  status = 200
