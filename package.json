@@ -1,0 +1,12 @@
+{
+  "name": "earthshield25",
+  "private": true,
+  "workspaces": [
+    "server"
+  ],
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node tests/run-tests.cjs",
+    "server": "node server/index.js"
+  }
+}

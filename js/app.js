@@ -21,6 +21,10 @@
     }
     listBtn.classList.toggle('active', name==='list');
     mapBtn.classList.toggle('active', name==='map');
+    listBtn.setAttribute('aria-selected', name === 'list' ? 'true' : 'false');
+    mapBtn.setAttribute('aria-selected', name === 'map' ? 'true' : 'false');
+    listBtn.tabIndex = name === 'list' ? 0 : -1;
+    mapBtn.tabIndex = name === 'map' ? 0 : -1;
   }
 
   // Map init
@@ -83,8 +87,6 @@
     // Simulate hook – expects a global simulateImpact in simulation.js to fill res-* ids
     document.getElementById('btn-simulate').addEventListener('click', () => {
       // simulation.js should read inputs and fill #impact-results
-      const resultsBox = document.getElementById('impact-results');
-      if (resultsBox) resultsBox.classList.remove('hidden');
       if (window.simulateImpact) window.simulateImpact();
     });
 
@@ -108,15 +110,13 @@
       ids.forEach(id=>{ const el = document.getElementById(id); if (el) el.textContent = '—'; });
       const box = document.getElementById('impact-results');
       if (box) box.classList.add('hidden');
+      const err = document.getElementById('simulation-error');
+      if (err){ err.textContent = ''; err.classList.add('hidden'); }
     };
   }
 
   // List rendering
   const resultsEl = document.getElementById('results');
-  const paginator = document.getElementById('paginator');
-  const prevBtn = document.getElementById('prev-page');
-  const nextBtn = document.getElementById('next-page');
-  const pageInfo = document.getElementById('page-info');
   const form = document.getElementById('filters');
   const queryEl = document.getElementById('query');
 
@@ -141,6 +141,15 @@
     if (km > 1e6) return (km/1e6).toFixed(2)+' '+million;
     if (km > 1e3) return (km/1e3).toFixed(0)+' '+thousand;
     return km.toFixed(0)+' '+unit;
+  }
+
+  function chooseAsteroid(size, speed){
+    const sz = document.getElementById('ast-size');
+    const sp = document.getElementById('ast-speed');
+    if (sz) sz.value = size.toFixed(0);
+    if (sp) sp.value = speed.toFixed(2);
+    showPanel('map');
+    if (window.resetSimulation) window.resetSimulation();
   }
 
   function appendItems(slice){
@@ -170,25 +179,36 @@
 
       const card = document.createElement('div');
       card.className = 'card';
+      card.tabIndex = 0;
+      card.dataset.size = item.sizeMeters || '';
+      card.dataset.speed = item.speedKmPerS || '';
+      card.dataset.name = item.name || '';
+      card.dataset.id = item.id || '';
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `${item.name || 'NEO'} - ${(I18N && I18N.t('card_choose_title')) || 'Simular'}`);
       card.innerHTML = `<div class="card-grid">${left}${right}</div>`;
       resultsEl.appendChild(card);
     });
-    // wire choose buttons (apenas para os recém adicionados)
-    resultsEl.querySelectorAll('.choose-btn').forEach(btn => {
-      if (btn.__wired) return;
-      btn.__wired = true;
-      btn.addEventListener('click', ()=>{
-        const size = parseFloat(btn.dataset.size)||500;
-        const speed = parseFloat(btn.dataset.speed)||20;
-        const sz = document.getElementById('ast-size');
-        const sp = document.getElementById('ast-speed');
-        if (sz) sz.value = size.toFixed(0);
-        if (sp) sp.value = speed.toFixed(2);
-        showPanel('map');
-        if (window.resetSimulation) window.resetSimulation();
-      });
-    });
   }
+
+  resultsEl.addEventListener('click', (ev)=>{
+    const card = ev.target.closest('.card');
+    if (card && !ev.target.closest('button, a')) {
+      chooseAsteroid(parseFloat(card.dataset.size) || 500, parseFloat(card.dataset.speed) || 20);
+      return;
+    }
+    const btn = ev.target.closest('.choose-btn');
+    if (!btn) return;
+    chooseAsteroid(parseFloat(btn.dataset.size) || 500, parseFloat(btn.dataset.speed) || 20);
+  });
+
+  resultsEl.addEventListener('keydown', (ev)=>{
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    const card = ev.target.closest('.card');
+    if (!card || ev.target.closest('button, a')) return;
+    ev.preventDefault();
+    chooseAsteroid(parseFloat(card.dataset.size) || 500, parseFloat(card.dataset.speed) || 20);
+  });
 
   function ensureSentinel(){
     if (sentinel) return sentinel;
@@ -236,7 +256,7 @@
       loader.remove();
       console.error(e);
       if (!resultsEl.querySelector('.card')){
-        const txt = (I18N && I18N.t('load_failed')) || 'Falha ao carregar.';
+        const txt = (I18N && I18N.t('simulation_error_generic')) || 'Falha ao carregar.';
         resultsEl.innerHTML = `<div class="empty">${txt}</div>`;
       }
       done = true;
@@ -251,7 +271,6 @@
     // Se limparmos o container, o sentinel antigo é removido do DOM.
     // Precisamos forçar a recriação para que o IntersectionObserver volte a observar.
     sentinel = null;
-    paginator.hidden = true; // esconder paginação antiga
     scroller = window.NasaClient.createScroller(q, BATCH_SIZE);
     loading = false;
     done = false;
@@ -259,17 +278,25 @@
     await loadMore();
   }
 
-  // Paginator events
-  // esconder e desativar paginação antiga permanentemente
-  if (paginator) paginator.style.display = 'none';
-  prevBtn.addEventListener('click', (e)=>{ e.preventDefault(); });
-  nextBtn.addEventListener('click', (e)=>{ e.preventDefault(); });
   form.addEventListener('submit', (ev)=>{ ev.preventDefault(); runSearch(); });
 
   // Tabs
   document.querySelectorAll('.tab-button').forEach(btn=>{
     btn.addEventListener('click', ()=> showPanel(btn.dataset.tab));
+    btn.addEventListener('keydown', (ev)=>{
+      if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') return;
+      ev.preventDefault();
+      const tabs = Array.from(document.querySelectorAll('.tab-button'));
+      const idx = tabs.indexOf(btn);
+      const nextIdx = ev.key === 'ArrowRight'
+        ? (idx + 1) % tabs.length
+        : (idx - 1 + tabs.length) % tabs.length;
+      tabs[nextIdx].focus();
+      showPanel(tabs[nextIdx].dataset.tab);
+    });
   });
+
+  showPanel('list');
 
   // Initial
   // Se trocou idioma, garantir que iniciamos na lista

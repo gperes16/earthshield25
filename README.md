@@ -29,6 +29,7 @@ EarthShield25 is an educational web application that allows users to explore NAS
 - Interactive map with selection by click/drag of the marker; synchronized latitude/longitude inputs.
 - Automatic detection of the target (Continent/Ocean) by the selected map point, via elevation query (open-meteo).
 - Educational calculations of energy (Mt TNT), crater (diameter), approximate seismic magnitude, and radii (1 psi/5 psi/thermal).
+- Input validation with immediate feedback for invalid simulation values.
 - Mitigation visualization: deflected point marker, dashed trajectory line, and deflection metrics (Lat/Lon deflected, deviation in km).
 - i18n PT/EN with persistence in localStorage and controlled reload.
 
@@ -38,6 +39,7 @@ assets/           # images and icons
 js/
   app.js          # UI, listing, infinite scroll, tabs, map integration
   nasaClient.js   # NeoWs client + scroller through pages
+  simCore.js      # pure simulation formulas and classifications
   simulation.js   # calculations and drawing layers on Leaflet
   i18n.js         # PT/EN translation and tooltips
 server/
@@ -53,11 +55,12 @@ README.md         # this document
 - Node proxy (`server/index.js`) is optional for environments where direct calls to NASA encounter CORS/rate-limit from DEMO_KEY; it injects `NASA_API_KEY` and replicates responses.
 
 ## How to run
-1) Install server dependencies (if using the proxy):
+1) Install dependencies from the project root:
 ```bash
-cd server
 npm i
 ```
+This installs the workspace dependencies for the local proxy under `server/`.
+
 2) Create `server/.env`:
 ```env
 NASA_API_KEY=YOUR_NASA_KEY
@@ -65,7 +68,7 @@ PORT=8787
 ```
 3) Run the proxy + static server:
 ```bash
-node server/index.js
+npm start
 ```
 4) Access the site via the server: `http://localhost:8787`
 
@@ -102,9 +105,9 @@ Without proxy: you can open `index.html` directly, but the listing will use DEMO
 ## Calculations and educational assumptions
 > Important: formulas are simplified and intended for educational purposes. Do not use for real risk assessment.
 
-- Energy (Mt):
+- Energy (J / Mt TNT):
   - Approximate mass of a sphere of standard density (3000 kg/m³ on land; 1000 kg/m³ in ocean).
-  - Energy ≈ ½ m v²; conversion to Mt TNT: 1 Mt ≈ 4.184e15 J.
+  - Energy ≈ ½ m v²; the UI exposes both Joules and Mt TNT (1 Mt ≈ 4.184e15 J).
 - Crater (diameter, m):
   - Empirical relation: `crater ≈ k * d^0.78 * v^0.44 * (0.8 + 0.4*sin(angle))` (k=1 land; 0.6 ocean).
 - Radii (km):
@@ -124,6 +127,7 @@ Without proxy: you can open `index.html` directly, but the listing will use DEMO
 - Layout with “Asteroids”/“Simulation” tabs.
 - Infinite scroll with sentinel and loader without blocking the page.
 - Educational tooltips on 1 psi, 5 psi, thermal, and Mw.
+- Keyboard focus states and visible validation messages for the simulation form.
 - Responsive header (wrap on mobile) and cards with focus/hover (cursor-pointer + light scale).
 - Professional footer with quick links and translation.
 
@@ -142,6 +146,10 @@ Without proxy: you can open `index.html` directly, but the listing will use DEMO
 - Run local server (proxy + static):
 ```bash
 node server/index.js
+```
+- Run unit tests:
+```bash
+node tests/run-tests.cjs
 ```
 - Adjust pages in search (e.g., 50 pages):
 ```js

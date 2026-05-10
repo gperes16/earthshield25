@@ -69,6 +69,14 @@ button, .primary, .icon-btn, .tab-button {
 .primary:hover { transform: translateY(-1px); box-shadow: 0 0 10px rgba(0,209,255,0.35); }
 .icon-btn { border:2px solid #00d1ff; background:#000; border-radius:10px; box-shadow: var(--neon); cursor:pointer; width:44px; height:44px; padding:0; }
 .icon-btn img { width:22px; height:22px; display:block; }
+.tab-button:focus-visible,
+.primary:focus-visible,
+.icon-btn:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #7ae7ff;
+  outline-offset: 2px;
+}
 
 .results { display:flex; flex-direction:column; gap:16px; }
 .card {
@@ -114,6 +122,14 @@ button, .primary, .icon-btn, .tab-button {
 .metric strong { display:block; }
 .impact-aside input, .impact-aside select { width:100%; }
 .impact-aside .btn-row { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+.error-message {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 43, 79, 0.45);
+  background: rgba(255, 43, 79, 0.12);
+  color: #ffb7c4;
+}
 
 #impact-results { margin-top:16px; background:#071227; border:1px solid rgba(0,209,255,.3); border-radius:12px; padding:16px; }
 #impact-results.hidden { display:none; }

@@ -1,14 +1,24 @@
 (function(global){
-  const KEY = global.NASA_API_KEY || 'DEMO_KEY';
   // Usar o proxy local do servidor; ele injeta a chave e lida com CORS
   const BASE = '/api/neo/browse';
+  const pageCache = new Map();
 
   async function fetchPage(page, size){
     const sz = Number.isFinite(size) && size > 0 ? size : 20;
+    const cacheKey = `${page}:${sz}`;
+    if (pageCache.has(cacheKey)) return pageCache.get(cacheKey);
     const url = `${BASE}?page=${page}&size=${sz}`;
-    const res = await fetch(url, {cache: 'no-store'});
-    if (!res.ok) throw new Error(`NASA NEO error ${res.status}`);
-    return res.json();
+    const request = fetch(url, {cache: 'no-store'})
+      .then(res => {
+        if (!res.ok) throw new Error(`NASA NEO error ${res.status}`);
+        return res.json();
+      })
+      .catch(err => {
+        pageCache.delete(cacheKey);
+        throw err;
+      });
+    pageCache.set(cacheKey, request);
+    return request;
   }
 
   function simplify(o){

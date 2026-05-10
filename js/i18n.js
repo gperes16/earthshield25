@@ -2,6 +2,8 @@
   const translations = {
     pt: {
       brand_name: 'EarthShield25',
+      page_title: 'EarthShield25 — Simulador e listagem de asteróides (NASA)',
+      page_description: 'Simulação de colisão de asteróides com a Terra e listagem usando APIs da NASA.',
       footer_edu: 'Conteúdo para fins educacionais.',
       footer_challenge: 'Desafio: NASA Space Apps',
       footer_theme: 'Tema: Meteor Madness',
@@ -16,6 +18,8 @@
       list_title: 'Listagem de Asteróides (NASA NeoWs)',
       search_placeholder: 'Ex.: 2001 WJ4 ou 3092506',
       simulate: 'Simular Impacto',
+      lang_pt: 'Português',
+      lang_en: 'English',
       results_title: 'Resultado da Simulação',
       map_mitigation: 'Mapa & Mitigação',
       target: 'Alvo:', angle:'Ângulo (°):', diameter:'Diâmetro (m):', speed:'Velocidade (km/s):', dv:'Δv (mm/s):', lead:'Lead Time (dias):',
@@ -55,6 +59,8 @@
       fmt_million_km: 'mi km',
       fmt_thousand_km: 'mil km',
       btn_center_title: 'Centralizar',
+      simulation_error_invalid: 'Verifique os campos da simulação: alguns valores estão fora do intervalo permitido.',
+      simulation_error_generic: 'Não foi possível executar a simulação. Tente novamente.',
       // Classes de evento
       class_catastrophic: 'Catastrófico',
       class_severe: 'Severo',
@@ -62,6 +68,8 @@
     },
     en: {
       brand_name: 'EarthShield25',
+      page_title: 'EarthShield25 — Asteroid simulator and listing (NASA)',
+      page_description: 'Asteroid impact simulation with Earth and listing using NASA APIs.',
       footer_edu: 'Content for educational purposes.',
       footer_challenge: 'Challenge: NASA Space Apps',
       footer_theme: 'Theme: Meteor Madness',
@@ -76,6 +84,8 @@
       list_title: 'Asteroid Listing (NASA NeoWs)',
       search_placeholder: 'e.g., 2001 WJ4 or 3092506',
       simulate: 'Simulate Impact',
+      lang_pt: 'Portuguese',
+      lang_en: 'English',
       results_title: 'Simulation Results',
       map_mitigation: 'Map & Mitigation',
       target: 'Target:', angle:'Angle (°):', diameter:'Diameter (m):', speed:'Speed (km/s):', dv:'Δv (mm/s):', lead:'Lead Time (days):',
@@ -115,6 +125,8 @@
       fmt_million_km: 'M km',
       fmt_thousand_km: 'k km',
       btn_center_title: 'Center map',
+      simulation_error_invalid: 'Check the simulation fields: some values are outside the allowed range.',
+      simulation_error_generic: 'The simulation could not be completed. Please try again.',
       // Event classes
       class_catastrophic: 'Catastrophic',
       class_severe: 'Severe',
@@ -128,6 +140,9 @@
     const t = translations[lang] || translations.pt;
     __lang = lang in translations ? lang : 'pt';
     const by = (id, key)=>{ const el = document.getElementById(id); if (el) el.textContent = t[key]; };
+    const byAttr = (id, attr, key)=>{ const el = document.getElementById(id); if (el) el.setAttribute(attr, t[key]); };
+    by('page-title','page_title');
+    byAttr('page-description', 'content', 'page_description');
     by('tab-list','tab_list');
     by('tab-map','tab_map');
     by('list-title','list_title');
@@ -138,6 +153,8 @@
     const initEmpty = document.getElementById('results-empty-initial'); if (initEmpty) initEmpty.textContent = t.empty_initial;
     by('btn-simulate-label','simulate');
     by('results-title','results_title');
+    const langPt = document.getElementById('lang-pt'); if (langPt) langPt.textContent = t.lang_pt;
+    const langEn = document.getElementById('lang-en'); if (langEn) langEn.textContent = t.lang_en;
     // footer texts
     const byOpt = (id, key)=>{ const el = document.getElementById(id); if (el && t[key]) el.textContent = t[key]; };
     byOpt('ft-brand', 'brand_name');
@@ -167,6 +184,7 @@
     const l1 = document.getElementById('legend-1'); if (l1){ l1.textContent = t.legend1; l1.title = t.info_r1; }
     const l5 = document.getElementById('legend-5'); if (l5){ l5.textContent = t.legend5; l5.title = t.info_r5; }
     const lth = document.getElementById('legend-th'); if (lth){ lth.textContent = t.legendT; lth.title = t.info_thermal; }
+    const centerBtn = document.getElementById('btn-centermap'); if (centerBtn){ centerBtn.title = t.btn_center_title; centerBtn.setAttribute('aria-label', t.btn_center_title); }
     // tooltips
     const tip = (sel, text)=>{ const el = document.getElementById(sel); if (el) el.title = t[text]; };
     tip('tip-r1','info_r1'); tip('tip-r5','info_r5'); tip('tip-mw','info_mw'); tip('tip-th','info_thermal');
